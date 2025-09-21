@@ -1,0 +1,79 @@
+//For this assignment you are to write a program that creates an image that assigns a random color to a pixel and then creates a color histogram.
+//Author: Alusine Kemokai
+//Date:September 12, 2025
+#include <iostream>
+#include <vector>
+#include <random>
+#include <cstdint>
+#include <iomanip>
+
+using namespace std;
+uint32_t generateRandomColor() {
+    static random_device rd;
+    static mt19937 gen(rd());
+    static uniform_int_distribution<uint32_t> dist(0, 255);
+    uint32_t r = dist(gen);
+    uint32_t g = dist(gen);
+    uint32_t b = dist(gen);
+    return (r << 16) | (g << 8) | b;
+}
+uint8_t getRed(uint32_t color) {
+    return (color >> 16) & 0xFF;
+}
+uint8_t getGreen(uint32_t color) {
+    return (color >> 8) & 0xFF;
+}
+uint8_t getBlue(uint32_t color) {
+    return color & 0xFF;
+}
+vector<int> computeHistogram(
+    const vector<vector<uint32_t>>& image_data,
+    char channel
+) {
+    vector<int> histogram(256, 0);
+
+    for (const auto& row : image_data) {
+        for (auto color : row) {
+            uint8_t value = 0;
+            if (channel == 'R') value = getRed(color);
+            else if (channel == 'G') value = getGreen(color);
+            else if (channel == 'B') value = getBlue(color);
+
+            histogram[value]++;
+        }
+    }
+    return histogram;
+}
+void displayHistogram(const vector<int>& histogram, char channel) {
+    cout << "Histogram for " << channel << " channel:\n";
+    for (int i = 0; i < 256; i += 16) {
+        cout << setw(3) << i << "-" << setw(3) << (i+15) << ": ";
+        int sum = 0;
+        for (int j = 0; j < 16; j++) {
+            sum += histogram[i + j];
+        }
+        cout << sum << "\n";
+    }
+    cout << "\n";
+}
+
+
+int main() {
+    const int ROWS = 10;
+    const int COLS = 10;
+
+    vector<vector<uint32_t>> image_data(ROWS, vector<uint32_t>(COLS));
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            image_data[i][j] = generateRandomColor();
+        }
+    }
+    vector<int> red_hist   = computeHistogram(image_data, 'R');
+    vector<int> green_hist = computeHistogram(image_data, 'G');
+    vector<int> blue_hist  = computeHistogram(image_data, 'B');
+    displayHistogram(red_hist, 'R');
+    displayHistogram(green_hist, 'G');
+    displayHistogram(blue_hist, 'B');
+
+    return 0;
+}
