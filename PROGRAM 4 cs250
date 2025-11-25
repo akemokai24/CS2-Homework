@@ -1,0 +1,156 @@
+#pragma once
+#include <string>
+
+enum class OrderType { DineIn, Takeout };
+enum class OrderStatus { Pending, Preparing, Ready, Served };
+
+class Order {
+private:
+    int orderId;
+    std::string description;
+    OrderType type;
+    OrderStatus status;
+public:
+    Order(int id, std::string desc, OrderType t);
+    int getId() const;
+    std::string getDescription() const;
+    OrderType getType() const;
+    OrderStatus getStatus() const;
+    void setStatus(OrderStatus s);
+};
+
+#include "Order.h"
+
+Order::Order(int id, std::string desc, OrderType t) {
+    orderId = id;
+    description = desc;
+    type = t;
+    status = OrderStatus::Pending;
+}
+
+int Order::getId() const {
+    return orderId;
+}
+
+std::string Order::getDescription() const {
+    return description;
+}
+
+OrderType Order::getType() const {
+    return type;
+}
+
+OrderStatus Order::getStatus() const {
+    return status;
+}
+
+void Order::setStatus(OrderStatus s) {
+    status = s;
+}
+
+#pragma once
+#include <queue>
+#include <stack>
+#include <memory>
+#include "Order.h"
+
+class KitchenManager {
+private:
+    std::queue<std::shared_ptr<Order>> prepQueue;
+    std::stack<std::shared_ptr<Order>> completedOrders;
+    std::shared_ptr<Order> currentOrder;
+    int nextOrderID;
+public:
+    KitchenManager();
+    void addNewOrder(const std::string& desc, OrderType type);
+    void startPreparingNextOrder();
+    void markOrderAsComplete();
+    void servePickupOrder();
+    void viewPrepQueue() const;
+    void viewCompletedStack() const;
+};
+
+#include "KitchenManager.h"
+#include <iostream>
+#include <iomanip>
+
+KitchenManager::KitchenManager() {
+    nextOrderID = 1;
+    currentOrder = nullptr;
+}
+
+void KitchenManager::addNewOrder(const std::string& desc, OrderType type) {
+    auto order = std::make_shared<Order>(nextOrderID++, desc, type);
+    prepQueue.push(order);
+    std::cout << "Order #" << order->getId() << " added to prep queue.\n";
+}
+
+void KitchenManager::startPreparingNextOrder() {
+    if (prepQueue.empty()) {
+        std::cout << "No orders in prep queue.\n";
+        return;
+    }
+    currentOrder = prepQueue.front();
+    prepQueue.pop();
+    currentOrder->setStatus(OrderStatus::Preparing);
+    std::cout << "Started preparing Order #" << currentOrder->getId() << ".\n";
+}
+
+void KitchenManager::markOrderAsComplete() {
+    if (!currentOrder) {
+        std::cout << "No order is currently being prepared.\n";
+        return;
+    }
+    currentOrder->setStatus(OrderStatus::Ready);
+    completedOrders.push(currentOrder);
+    std::cout << "Order #" << currentOrder->getId() << " marked as Ready.\n";
+    currentOrder = nullptr;
+}
+
+void KitchenManager::servePickupOrder() {
+    if (completedOrders.empty()) {
+        std::cout << "No completed orders to serve.\n";
+        return;
+    }
+    auto order = completedOrders.top();
+    completedOrders.pop();
+    order->setStatus(OrderStatus::Served);
+    std::cout << "Order #" << order->getId() << " served.\n";
+    std::cout << "Description: " << order->getDescription() << "\n";
+}
+
+void KitchenManager::viewPrepQueue() const {
+    if (prepQueue.empty()) {
+        std::cout << "Prep queue is empty.\n";
+        return;
+    }
+    std::queue<std::shared_ptr<Order>> temp = prepQueue;
+    std::cout << "\nPrep Queue:\n";
+    while (!temp.empty()) {
+        auto order = temp.front();
+        temp.pop();
+        std::cout << "Order #" << order->getId()
+                  << " | " << order->getDescription()
+                  << " | Type: " << ((order->getType() == OrderType::DineIn) ? "Dine-In" : "Takeout")
+                  << " | Status: " << ((order->getStatus() == OrderStatus::Pending) ? "Pending" : "Preparing")
+                  << "\n";
+    }
+}
+
+void KitchenManager::viewCompletedStack() const {
+    if (completedOrders.empty()) {
+        std::cout << "Completed orders stack is empty.\n";
+        return;
+    }
+    std::stack<std::shared_ptr<Order>> temp = completedOrders;
+    std::cout << "\nCompleted Orders Stack:\n";
+    while (!temp.empty()) {
+        auto order = temp.top();
+        temp.pop();
+        std::cout << "Order #" << order->getId()
+                  << " | " << order->getDescription()
+                  << " | Type: " << ((order->getType() == OrderType::DineIn) ? "Dine-In" : "Takeout")
+                  << " | Status: Ready\n";
+    }
+}
+
