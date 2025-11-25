@@ -1,0 +1,55 @@
+#include <iostream>
+#include "Word.h"
+#include "GuessedLetters.h"
+#include "GameState.h"
+#include "Cow.h"
+#include "Insect.h"
+using namespace std;
+
+int main() {
+    string wordToGuess;
+    cout << "Enter the word to guess (uppercase only): ";
+    cin >> wordToGuess;
+
+    Word word(wordToGuess);
+    GuessedLetters guessed;
+
+    cout << "Choose animal type (1 for Cow, 2 for Insect): ";
+    int choice;
+    cin >> choice;
+
+    Animal* animal;
+    if (choice == 2) {
+        animal = new Insect();
+    } else {
+        animal = new Cow();
+    }
+
+    GameState state(animal->getBodyParts());
+
+    while (!word.solved() && !state.gameOver()) {
+        cout << "Guess a letter: ";
+        char guess;
+        cin >> guess;
+
+        if (word.findLetter(guess)) {
+            word.addLetter(guess);
+        } else {
+            state.addState();
+            guessed.addLetter(guess);
+        }
+
+        cout << "Game state: " << state.getState() << endl;
+        cout << "Guessed letters: " << guessed.getLetters() << endl;
+        cout << "Guess this word: " << word.getWord() << endl;
+    }
+
+    if (word.solved()) {
+        cout << "You solved it!" << endl;
+    } else {
+        cout << "Game over!" << endl;
+    }
+
+    delete animal;
+    return 0;
+}
